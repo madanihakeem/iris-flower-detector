@@ -13,7 +13,8 @@ st.write("نیچے دیے گئے باکس میں اپنی ای میل کا مت�
 @st.cache_resource
 def train_spam_model():
     # اگر فائل کا نام مختلف ہے تو یہاں تبدیل کریں
-    df = pd.read_csv('spam.csv', encoding='latin-1')
+    df = pd.read_csv(r'C:\Users\dell\Documents\py\spam.csv', encoding='latin-1')
+
     
     # فالتو کالمز صاف کرنا
     df = df.dropna(how="any", axis=1)

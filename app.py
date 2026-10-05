@@ -52,7 +52,8 @@ if st.button("چیک کریں (Check Email)"):
         prediction = model.predict(input_tfidf)
         
         st.subheader("نتيجہ (Result):")
-        if prediction.strip().lower() == 'spam':
+        if prediction[0].strip().lower() == 'spam':
+
             st.error("❌ یہ ایک اسپیم (Spam) ای میل لگ رہی ہے! محتاط رہیں۔")
         else:
             st.success("✅ یہ ایک جائز اور محفوظ ای میل (Ham) ہے۔")

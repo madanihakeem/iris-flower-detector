@@ -1,45 +1,34 @@
-import streamlit as st
-from sklearn.datasets import load_iris
-from sklearn.tree import DecisionTreeClassifier
-import numpy as np
-
-# 1. ماڈل کو بیک اینڈ پر لوڈ اور ٹرین کریں
-@st.cache_resource # اس سے ماڈل بار بار ٹرین نہیں ہوگا اور ایپ تیز چلے گی
-def load_and_train_model():
-    iris = load_iris()
-    model = DecisionTreeClassifier(max_depth=3, random_state=42)
-    model.fit(iris.data, iris.target)
-    return model, iris.target_names
-
-model, target_names = load_and_train_model()
-
-# 2. ویب ایپ کا فرنٹ اینڈ (UI Design)
-st.set_page_config(page_title="Iris Flower Predictor", page_icon="🌸", layout="centered")
-
-st.title("🌸 پھولوں کی پہچان کرنے والی سمارٹ ایپ")
-st.write("پھول کی پتیوں کا سائز درج کریں، اور ہمارا مشین لرننگ ماڈل آپ کو پھول کا نام بتائے گا۔")
-
-st.markdown("---")
-
-# 3. صارف سے ان پٹ لینے کے لیے سلائیڈرز (Sliders)
-st.subheader("📏 پتیوں کا سائز منتخب کریں:")
-
-sepal_length = st.slider("Sepal Length (cm)", 4.0, 8.0, 5.8)
-sepal_width  = st.slider("Sepal Width (cm)", 2.0, 4.5, 3.0)
-petal_length = st.slider("Petal Length (cm)", 1.0, 7.0, 4.3)
-petal_width  = st.slider("Petal Width (cm)", 0.1, 2.5, 1.3)
-
-st.markdown("---")
-
-# 4. بٹن اور پیشگوئی (Prediction Button)
-if st.button("پھول کی قسم معلوم کریں ✨", type="primary"):
-    # صارف کے ڈیٹا کو ایرے میں بدلیں
-    user_input = np.array([[sepal_length, sepal_width, petal_length, petal_width]])
+@st.cache_resource
+def train_spam_model():
+    try:
+        # اصلی کینگل فائل لوڈ کرنا
+        df = pd.read_csv('spam.csv', encoding='latin-1')
+        df = df.dropna(how="any", axis=1)
+        if 'v1' in df.columns and 'v2' in df.columns:
+            df.columns = ['label', 'text']
+    except FileNotFoundError:
+        # اگر فائل نہ ملے تو صارف کو وارننگ دکھانا
+        st.sidebar.error("❌ 'spam.csv' فائل نہیں ملی! فرضی ڈیٹا استعمال ہو رہا ہے۔")
+        data = {
+            'text': [
+                'Win a free iPhone now! Click here to claim your prize cash money.', 
+                'Hey, are we still meeting tomorrow for lunch?',
+                'URGENT: Verify your password and account details immediately.', 
+                'Can you please send me the final project report by tomorrow?',
+                'Get rich quick! Make money now. Cash reward winner!', 
+                'The project deadline is extended to next Friday.'
+            ],
+            'label': ['spam', 'ham', 'spam', 'ham', 'spam', 'ham']
+        }
+        df = pd.DataFrame(data)
     
-    # ماڈل سے پیشگوئی کروائیں
-    prediction = model.predict(user_input)[0]
-    predicted_flower = target_names[prediction]
+    X_train, _, y_train, _ = train_test_split(df['text'], df['label'], test_size=0.2, random_state=42)
     
-    # رزلٹ کو خوبصورت انداز میں دکھائیں
-    st.balloons() # اسکرین پر غبارے اڑانے کے لیے 🎉
-    st.success(f"### 🎉 یہ پھول **{predicted_flower.upper()}** ہے!")
+    # token_pattern شامل کیا ہے تاکہ نمبرز اور پرائز منی (جیسے 900) کو بھی ماڈل نوٹ کرے
+    tfidf = TfidfVectorizer(stop_words='english', token_pattern=r'(?u)\b\w+\b')
+    X_train_tfidf = tfidf.fit_transform(X_train)
+    
+    model = MultinomialNB()
+    model.fit(X_train_tfidf, y_train)
+    
+    return model, tfidf
